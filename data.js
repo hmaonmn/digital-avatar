@@ -179,4 +179,33 @@ const DEFAULT_GOALS = [
   { id: 'g2', title: 'Провести 20 код-ревью',             skill: 'backend_testing', xp: 150, progress: 60, completed: false },
   { id: 'g3', title: 'Выступить на внутреннем митапе',    skill: 'communication',   xp: 250, progress: 0,  completed: false },
   { id: 'g4', title: 'Стать наставником для джуна',       skill: 'mentoring',       xp: 300, progress: 20, completed: false },
+
+
+/* Короткие названия для подписей на радаре */
+const SKILL_SHORT_NAMES = {
+  algorithms: 'Алгоритмы',     api_design: 'API-дизайн',    databases: 'Базы данных',
+  architecture: 'Архитектура', backend_testing: 'Тестирование',
+  html_css: 'HTML/CSS',        js_ts: 'JS/TS',              ui_ux: 'UI/UX',
+  frontend_perf: 'Performance', accessibility: 'A11y',
+  sql: 'SQL',                  python: 'Python',            ml: 'ML',
+  statistics: 'Статистика',    visualization: 'Визуализация',
+  linux: 'Linux',              ci_cd: 'CI/CD',              k8s: 'Kubernetes',
+  cloud: 'Cloud',              monitoring: 'Мониторинг',
+  discovery: 'Discovery',      analytics: 'Аналитика',      roadmap: 'Roadmap',
+  stakeholder: 'Стейкхолдеры', metrics: 'Метрики',
+  test_design: 'Тест-дизайн',  automation: 'Автотесты',
+  api_testing: 'API-тесты',    perf_testing: 'Нагрузка',
+  communication: 'Коммуникация', ownership: 'Ownership',    mentoring: 'Менторство',
+  teamwork: 'Командность',     systems_thinking: 'Сист. мышление',
+};
+
+/* Универсальные требования к soft-навыкам по грейдам:
+   [Junior, Middle, Senior, Lead, Principal] */
+const SOFT_GRADE_REQUIREMENTS = {
+  communication:    [25, 45, 65, 80, 92],
+  ownership:        [30, 55, 75, 88, 95],
+  mentoring:        [15, 30, 50, 75, 90],
+  teamwork:         [40, 60, 75, 88, 95],
+  systems_thinking: [25, 45, 65, 82, 92],
+};
 ];
