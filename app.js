@@ -175,6 +175,147 @@ function renderProfile() {
   `;
 }
 
+/* ---------- Career Tree ---------- */
+function buildCareerTreeSVG() {
+  const pos = currentPosition();
+  const grade = GRADES.find(g => g.id === pos.gradeId);
+
+  const W = 1200, H = 680;
+  const NODE_W = 240, NODE_H = 76;
+  const centerX = 600, centerY = 420;
+
+  const nodes = [];
+  const edges = [];
+
+  /* Текущая позиция */
+  nodes.push({ id: pos.id, pos, x: centerX, y: centerY, type: 'current', label: 'Вы здесь' });
+
+  /* Следующий грейд (вертикальный рост) */
+  const nextGrade = GRADES.find(g => g.level === grade.level + 1);
+  const nextPos = nextGrade ? POSITION_BY_ID[`${pos.trackId}_${nextGrade.id}`] : null;
+  if (nextPos) {
+    nodes.push({ id: nextPos.id, pos: nextPos, x: centerX, y: centerY - 140, type: 'next', label: 'Следующий шаг' });
+    edges.push({ from: pos.id, to: nextPos.id, type: 'vertical' });
+  }
+
+  /* Грейд +2 (перспектива) */
+  const nextGrade2 = GRADES.find(g => g.level === grade.level + 2);
+  const nextPos2 = nextGrade2 ? POSITION_BY_ID[`${pos.trackId}_${nextGrade2.id}`] : null;
+  if (nextPos2 && nextPos) {
+    nodes.push({ id: nextPos2.id, pos: nextPos2, x: centerX, y: centerY - 280, type: 'future', label: 'Перспектива' });
+    edges.push({ from: nextPos.id, to: nextPos2.id, type: 'future' });
+  }
+
+  /* Предыдущий грейд */
+  const prevGrade = GRADES.find(g => g.level === grade.level - 1);
+  const prevPos = prevGrade ? POSITION_BY_ID[`${pos.trackId}_${prevGrade.id}`] : null;
+  if (prevPos) {
+    nodes.push({ id: prevPos.id, pos: prevPos, x: centerX, y: centerY + 140, type: 'prev', label: 'Пройдено' });
+    edges.push({ from: pos.id, to: prevPos.id, type: 'prev' });
+  }
+
+  /* Горизонтальные переходы — другие треки на том же грейде */
+  const otherTracks = Object.entries(TRACKS).filter(([id]) => id !== pos.trackId);
+  const leftCount = Math.floor(otherTracks.length / 2);
+  const rightCount = otherTracks.length - leftCount;
+
+  const sideYs = (count) => {
+    if (count === 0) return [];
+    if (count === 1) return [centerY];
+    const spacing = Math.min(140, 300 / (count - 1));
+    const total = (count - 1) * spacing;
+    const start = centerY - total / 2;
+    return Array.from({ length: count }, (_, i) => start + i * spacing);
+  };
+  const leftYs = sideYs(leftCount);
+  const rightYs = sideYs(rightCount);
+
+  otherTracks.forEach(([trackId], i) => {
+    const horizPos = POSITION_BY_ID[`${trackId}_${grade.id}`];
+    let x, y;
+    if (i < leftCount) { x = 200; y = leftYs[i]; }
+    else { x = 1000; y = rightYs[i - leftCount]; }
+    nodes.push({ id: horizPos.id, pos: horizPos, x, y, type: 'horiz', label: 'Альтернатива' });
+    edges.push({ from: pos.id, to: horizPos.id, type: 'horiz' });
+  });
+
+  /* Точка на границе прямоугольника в направлении к (tx, ty) */
+  function edgePoint(cx, cy, w, h, tx, ty) {
+    const dx = tx - cx, dy = ty - cy;
+    if (dx === 0 && dy === 0) return { x: cx, y: cy };
+    const angle = Math.atan2(dy, dx);
+    const tanA = Math.abs(Math.tan(angle));
+    let x, y;
+    if (tanA <= h / w) {
+      x = cx + Math.sign(dx) * (w / 2);
+      y = cy + Math.sign(dx) * (w / 2) * Math.tan(angle);
+    } else {
+      const cotA = 1 / (tanA || Infinity);
+      x = cx + Math.sign(dy) * (h / 2) * cotA;
+      y = cy + Math.sign(dy) * (h / 2);
+    }
+    return { x, y };
+  }
+
+  /* Рёбра */
+  const edgeSvg = edges.map(e => {
+    const fromNode = nodes.find(n => n.id === e.from);
+    const toNode   = nodes.find(n => n.id === e.to);
+    if (!fromNode || !toNode) return '';
+    const start = edgePoint(fromNode.x, fromNode.y, NODE_W, NODE_H, toNode.x, toNode.y);
+    const end   = edgePoint(toNode.x, toNode.y, NODE_W, NODE_H, fromNode.x, fromNode.y);
+
+    let stroke, dash = '', marker;
+    if (e.type === 'vertical') { stroke = '#22c55e'; marker = 'arrow-green'; }
+    else if (e.type === 'horiz') { stroke = '#3b82f6'; marker = 'arrow-blue'; }
+    else if (e.type === 'future') { stroke = 'rgba(34,197,94,0.5)'; marker = 'arrow-green-faded'; dash = 'stroke-dasharray="6 4"'; }
+    else { stroke = 'rgba(139,160,196,0.4)'; marker = 'arrow-gray'; }
+
+    return `<line x1="${start.x.toFixed(1)}" y1="${start.y.toFixed(1)}" x2="${end.x.toFixed(1)}" y2="${end.y.toFixed(1)}"
+      stroke="${stroke}" stroke-width="2" ${dash} marker-end="url(#${marker})"/>`;
+  }).join('');
+
+  /* Узлы */
+  const nodeSvg = nodes.map(n => {
+    const nx = n.x - NODE_W / 2;
+    const ny = n.y - NODE_H / 2;
+    const t = TRACKS[n.pos.trackId];
+    const g = GRADES.find(gr => gr.id === n.pos.gradeId);
+
+    let pctText = '';
+    if (n.type === 'current') pctText = '100%';
+    else if (n.type !== 'prev') pctText = Math.round(positionReadiness(n.pos, state.skills) * 100) + '%';
+
+    return `
+      <g class="tree-node ${n.type}" data-pos="${n.id}" style="cursor:pointer">
+        <rect class="tree-node-box" x="${nx}" y="${ny}" width="${NODE_W}" height="${NODE_H}" rx="12"/>
+        <text x="${n.x}" y="${n.y - 14}" text-anchor="middle" class="tree-node-title">${t.icon} ${g.name} ${t.name}</text>
+        <text x="${n.x}" y="${n.y + 6}" text-anchor="middle" class="tree-node-pct">${pctText}</text>
+        <text x="${n.x}" y="${n.y + 24}" text-anchor="middle" class="tree-node-label">${n.label}</text>
+      </g>`;
+  }).join('');
+
+  return `
+    <svg viewBox="0 0 ${W} ${H}" class="career-tree-svg" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#22c55e"/>
+        </marker>
+        <marker id="arrow-green-faded" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(34,197,94,0.5)"/>
+        </marker>
+        <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#3b82f6"/>
+        </marker>
+        <marker id="arrow-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(139,160,196,0.4)"/>
+        </marker>
+      </defs>
+      ${edgeSvg}
+      ${nodeSvg}
+    </svg>`;
+}
+
 /* ---------- Render: Map ---------- */
 function renderMap() {
   const curPos = currentPosition();
