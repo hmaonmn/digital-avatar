@@ -24,6 +24,7 @@ const DEFAULT_STATE = {
 const clone = o => JSON.parse(JSON.stringify(o));
 
 let state = loadState();
+let radarMode = 'hard';
 
 function loadState() {
   try {
@@ -287,13 +288,171 @@ function renderFeed() {
   `;
 }
 
-/* ---------- Render all ---------- */
-function renderAll() {
-  renderProfile();
-  renderMap();
-  renderPlan();
-  renderFeed();
+/* ---------- Radar ---------- */
+function polarPoint(cx, cy, r, angleDeg) {
+  const rad = (angleDeg - 90) * Math.PI / 180;
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
 }
+
+function buildRadarSVG(skillIds, requirements, userSkills, currentGradeLevel) {
+  const N = skillIds.length;
+  const size = 560;
+  const cx = size / 2, cy = size / 2;
+  const R = 140;
+  const labelR = 190;
+  const angles = Array.from({ length: N }, (_, i) => (360 / N) * i);
+
+  /* Сетка */
+  const rings = [25, 50, 75, 100];
+  const ringPolygons = rings.map(pct => {
+    const pts = angles.map(a => {
+      const p = polarPoint(cx, cy, R * pct / 100, a);
+      return `${p.x.toFixed(1)},${p.y.toFixed(1)}`;
+    }).join(' ');
+    return `<polygon points="${pts}" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>`;
+  }).join('');
+
+  /* Оси */
+  const axes = angles.map(a => {
+    const p = polarPoint(cx, cy, R, a);
+    return `<line x1="${cx}" y1="${cy}" x2="${p.x.toFixed(1)}" y2="${p.y.toFixed(1)}" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>`;
+  }).join('');
+
+  /* Метки 25 / 50 / 75 / 100 */
+  const pctLabels = rings.map(pct => {
+    const p = polarPoint(cx, cy, R * pct / 100, 0);
+    return `<text x="${(p.x - 6).toFixed(1)}" y="${(p.y + 4).toFixed(1)}" fill="rgba(139,160,196,0.55)" font-size="10" text-anchor="end" font-family="Manrope,sans-serif">${pct}</text>`;
+  }).join('');
+
+  /* Границы грейдов Junior / Middle / Senior */
+  const gradeMeta = [
+    { level: 1, color: '#64748b' },
+    { level: 2, color: '#eab308' },
+    { level: 3, color: '#22c55e' },
+  ];
+  const gradePolygons = gradeMeta.map(({ level, color }) => {
+    const values = skillIds.map(id => requirements[id]?.[level - 1] || 0);
+    const pts = values.map((v, i) => {
+      const p = polarPoint(cx, cy, R * v / 100, angles[i]);
+      return `${p.x.toFixed(1)},${p.y.toFixed(1)}`;
+    }).join(' ');
+    const isCurrent = level === currentGradeLevel;
+    return `<polygon points="${pts}" fill="${color}" fill-opacity="${isCurrent ? 0.1 : 0.04}" stroke="${color}" stroke-width="${isCurrent ? 2 : 1.2}" stroke-opacity="${isCurrent ? 0.85 : 0.55}" ${isCurrent ? '' : 'stroke-dasharray="4 3"'}/>`;
+  }).join('');
+
+  /* Полигон текущих навыков */
+  const userValues = skillIds.map(id => userSkills[id] || 0);
+  const userPts = userValues.map((v, i) => {
+    const p = polarPoint(cx, cy, R * v / 100, angles[i]);
+    return `${p.x.toFixed(1)},${p.y.toFixed(1)}`;
+  }).join(' ');
+  const userDots = userValues.map((v, i) => {
+    const p = polarPoint(cx, cy, R * v / 100, angles[i]);
+    return `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="#6366f1" stroke="#0a0f1c" stroke-width="1.5"/>`;
+  }).join('');
+
+  /* Подписи осей: имя + значение */
+  const axisLabels = skillIds.map((id, i) => {
+    const p = polarPoint(cx, cy, labelR, angles[i]);
+    const v = userSkills[id] || 0;
+    const name = SKILL_SHORT_NAMES[id] || SKILL_CATALOG[id]?.name || id;
+    return `
+      <text x="${p.x.toFixed(1)}" y="${p.y.toFixed(1)}" text-anchor="middle" font-family="Manrope,sans-serif">
+        <tspan x="${p.x.toFixed(1)}" dy="-2" fill="#c7d2fe" font-size="11" font-weight="700">${name}</tspan>
+        <tspan x="${p.x.toFixed(1)}" dy="14" fill="#8ba0c4" font-size="10" font-weight="500">${v}%</tspan>
+      </text>`;
+  }).join('');
+
+  return `
+    <svg viewBox="0 0 ${size} ${size}" class="radar-svg" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <radialGradient id="avatarRadarGrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#22d3ee"/>
+          <stop offset="100%" stop-color="#6366f1"/>
+        </radialGradient>
+      </defs>
+      ${ringPolygons}
+      ${axes}
+      ${pctLabels}
+      ${gradePolygons}
+      <polygon points="${userPts}" fill="url(#avatarRadarGrad)" fill-opacity="0.3" stroke="#6366f1" stroke-width="2.5" stroke-linejoin="round"/>
+      ${userDots}
+      ${axisLabels}
+    </svg>`;
+}
+
+function renderRadar() {
+  const pos = currentPosition();
+  const track = TRACKS[pos.trackId];
+  const isHard = radarMode === 'hard';
+  const skillIds = isHard ? Object.keys(track.skills) : Object.keys(SOFT_GRADE_REQUIREMENTS);
+  const requirements = isHard ? track.skills : SOFT_GRADE_REQUIREMENTS;
+
+  const svg = buildRadarSVG(skillIds, requirements, state.skills, pos.gradeLevel);
+
+  const gradeLabels = ['Junior', 'Middle', 'Senior'];
+  const tableRows = skillIds.map(id => {
+    const cur = state.skills[id] || 0;
+    const name = SKILL_SHORT_NAMES[id] || SKILL_CATALOG[id]?.name || id;
+    const cells = gradeLabels.map((_, i) => {
+      const req = requirements[id]?.[i] || 0;
+      const cls = cur >= req ? 'ok' : 'gap';
+      return `<td class="num ${cls}">${req}</td>`;
+    }).join('');
+    return `<tr><td>${name}</td><td class="num you">${cur}</td>${cells}</tr>`;
+  }).join('');
+
+  document.getElementById('radar').innerHTML = `
+    <div class="card">
+      <div class="panel-head">
+        <h2 style="margin:0">Роза навыков</h2>
+        <div class="radar-toggle">
+          <button class="toggle-btn ${isHard ? 'active' : ''}" data-radar-mode="hard">Hard skills</button>
+          <button class="toggle-btn ${!isHard ? 'active' : ''}" data-radar-mode="soft">Soft skills</button>
+        </div>
+      </div>
+      <p class="muted">На графике — ваши навыки${isHard ? ` (направление <strong style="color:var(--text)">${track.name}</strong>)` : ''} и границы грейдов Junior, Middle, Senior. Ваша позиция: <strong style="color:var(--text)">${pos.title}</strong>.</p>
+      <div class="radar-layout">
+        <div class="radar-wrap">${svg}</div>
+        <div class="radar-info">
+          <div class="legend legend-v">
+            <span><i class="dot radar-user"></i>Ваши навыки</span>
+            <span><i class="dot radar-junior"></i>Junior</span>
+            <span><i class="dot radar-middle"></i>Middle</span>
+            <span><i class="dot radar-senior"></i>Senior</span>
+          </div>
+          <table class="radar-table">
+            <thead>
+              <tr>
+                <th>Навык</th>
+                <th class="num">Вы</th>
+                <th class="num">J</th>
+                <th class="num">M</th>
+                <th class="num">S</th>
+              </tr>
+            </thead>
+            <tbody>${tableRows}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
+}
+
+function onRadarClick(e) {
+  const btn = e.target.closest('[data-radar-mode]');
+  if (btn) {
+    radarMode = btn.dataset.radarMode;
+    renderRadar();
+  }
+}
+
+/* ---------- Render all ---------- */
+function renderAll() { 
+   renderProfile(); 
+   renderRadar(); 
+   renderMap(); 
+   renderPlan(); 
+   renderFeed(); }
 
 /* ---------- Modal ---------- */
 function openPositionModal(posId) {
@@ -448,6 +607,7 @@ function init() {
 
   document.getElementById('profile').addEventListener('click', onProfileClick);
   document.getElementById('plan').addEventListener('click', onPlanClick);
+  document.getElementById('radar').addEventListener('click', onRadarClick);
 
   document.getElementById('map').addEventListener('click', e => {
     const cell = e.target.closest('[data-pos]');
