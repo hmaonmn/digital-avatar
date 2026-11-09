@@ -198,6 +198,7 @@ const SKILL_SHORT_NAMES = {
   communication: 'Коммуникация', ownership: 'Ownership',    mentoring: 'Менторство',
   teamwork: 'Командность',     systems_thinking: 'Сист. мышление',
 };
+];
 
 /* Универсальные требования к soft-навыкам по грейдам:
    [Junior, Middle, Senior, Lead, Principal] */
@@ -208,4 +209,3 @@ const SOFT_GRADE_REQUIREMENTS = {
   teamwork:         [40, 60, 75, 88, 95],
   systems_thinking: [25, 45, 65, 82, 92],
 };
-];
