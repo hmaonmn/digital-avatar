@@ -421,3 +421,84 @@ main { flex: 1; padding: 24px 28px; max-width: 1300px; width: 100%; margin: 0 au
   z-index: 200;
 }
 #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ---------- Radar (Роза навыков) ---------- */
+.radar-toggle {
+  display: inline-flex;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  background: var(--bg-2);
+}
+.toggle-btn {
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: .15s;
+}
+.toggle-btn:hover { color: var(--text); }
+.toggle-btn.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff;
+}
+
+.radar-layout {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  gap: 24px;
+  align-items: start;
+  margin-top: 14px;
+}
+@media (max-width: 900px) { .radar-layout { grid-template-columns: 1fr; } }
+
+.radar-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+.radar-svg {
+  width: 100%;
+  max-width: 560px;
+  height: auto;
+  display: block;
+}
+
+.legend-v {
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.dot.radar-user   { background: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.25); }
+.dot.radar-junior { background: #64748b; }
+.dot.radar-middle { background: #eab308; }
+.dot.radar-senior { background: #22c55e; }
+
+.radar-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.radar-table th {
+  padding: 8px 10px;
+  text-align: left;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  border-bottom: 1px solid var(--border);
+}
+.radar-table th.num, .radar-table td.num { text-align: right; }
+.radar-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid rgba(33,48,77,.5);
+}
+.radar-table td.you { color: #c7d2fe; font-weight: 700; }
+.radar-table td.num.ok  { color: var(--green); }
+.radar-table td.num.gap { color: #fca5a5; }
