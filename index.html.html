@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Digital Avatar — платформа развития сотрудника</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="app-header">
+  <div class="brand">
+    <div class="brand-logo">◈</div>
+    <div>
+      <h1>Digital Avatar</h1>
+      <p class="muted small">Платформа развития сотрудников</p>
+    </div>
+  </div>
+  <nav class="tabs">
+    <button class="tab active" data-tab="profile">Профиль</button>
+    <button class="tab" data-tab="map">Карта роста</button>
+    <button class="tab" data-tab="plan">План развития</button>
+    <button class="tab" data-tab="feed">Активность</button>
+  </nav>
+</header>
+
+<main>
+  <section id="profile" class="tab-panel active"></section>
+  <section id="map" class="tab-panel"></section>
+  <section id="plan" class="tab-panel"></section>
+  <section id="feed" class="tab-panel"></section>
+</main>
+
+<footer class="app-footer">
+  <span class="muted small">Digital Avatar MVP · демо-данные хранятся локально в браузере</span>
+  <button class="btn btn-ghost btn-sm" id="reset-btn">Сбросить демо</button>
+</footer>
+
+<div id="modal" class="modal hidden">
+  <div class="modal-content"></div>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
