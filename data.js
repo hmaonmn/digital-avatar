@@ -179,7 +179,7 @@ const DEFAULT_GOALS = [
   { id: 'g2', title: 'Провести 20 код-ревью',             skill: 'backend_testing', xp: 150, progress: 60, completed: false },
   { id: 'g3', title: 'Выступить на внутреннем митапе',    skill: 'communication',   xp: 250, progress: 0,  completed: false },
   { id: 'g4', title: 'Стать наставником для джуна',       skill: 'mentoring',       xp: 300, progress: 20, completed: false },
-
+];
 
 /* Короткие названия для подписей на радаре */
 const SKILL_SHORT_NAMES = {
@@ -198,7 +198,6 @@ const SKILL_SHORT_NAMES = {
   communication: 'Коммуникация', ownership: 'Ownership',    mentoring: 'Менторство',
   teamwork: 'Командность',     systems_thinking: 'Сист. мышление',
 };
-];
 
 /* Универсальные требования к soft-навыкам по грейдам:
    [Junior, Middle, Senior, Lead, Principal] */
