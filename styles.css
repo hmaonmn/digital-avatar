@@ -502,3 +502,79 @@ main { flex: 1; padding: 24px 28px; max-width: 1300px; width: 100%; margin: 0 au
 .radar-table td.you { color: #c7d2fe; font-weight: 700; }
 .radar-table td.num.ok  { color: var(--green); }
 .radar-table td.num.gap { color: #fca5a5; }
+
+/* ---------- Career Tree ---------- */
+.career-tree-wrap {
+  overflow-x: auto;
+  margin-top: 16px;
+  padding: 8px 0;
+}
+.career-tree-svg {
+  display: block;
+  width: 100%;
+  min-width: 960px;
+  height: auto;
+}
+
+.tree-node .tree-node-box {
+  fill: var(--card-2);
+  stroke: var(--border);
+  stroke-width: 1.5;
+  transition: stroke .15s, fill .15s;
+}
+.tree-node:hover .tree-node-box { stroke-width: 2.5; }
+
+.tree-node.current .tree-node-box {
+  fill: rgba(99,102,241,0.18);
+  stroke: #6366f1;
+  stroke-width: 2.5;
+}
+.tree-node.next .tree-node-box {
+  fill: rgba(34,197,94,0.10);
+  stroke: #22c55e;
+  stroke-width: 2;
+}
+.tree-node.future .tree-node-box {
+  fill: rgba(34,197,94,0.04);
+  stroke: rgba(34,197,94,0.4);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 3;
+}
+.tree-node.prev .tree-node-box {
+  fill: rgba(100,116,139,0.06);
+  stroke: rgba(100,116,139,0.4);
+  stroke-width: 1.5;
+}
+.tree-node.horiz .tree-node-box {
+  fill: rgba(59,130,246,0.10);
+  stroke: #3b82f6;
+  stroke-width: 1.5;
+}
+
+.tree-node:hover.current .tree-node-box { stroke: #818cf8; }
+.tree-node:hover.next .tree-node-box    { stroke: #4ade80; }
+.tree-node:hover.horiz .tree-node-box   { stroke: #60a5fa; }
+
+.tree-node-title {
+  font-family: 'Manrope', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  fill: var(--text);
+}
+.tree-node-pct {
+  font-family: 'Manrope', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  fill: #c7d2fe;
+}
+.tree-node-label {
+  font-family: 'Manrope', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  fill: var(--muted);
+  letter-spacing: .06em;
+}
+
+.dot.edge-vertical { background: #22c55e; }
+.dot.edge-horiz    { background: #3b82f6; }
+.dot.edge-future   { background: rgba(34,197,94,0.4); }
