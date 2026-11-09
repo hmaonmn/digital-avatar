@@ -340,14 +340,15 @@ function renderMap() {
       else if (isVertical){ cls += ' vertical';   label = 'Вертикальный рост'; }
       else if (isHoriz)   { cls += ' horizontal'; label = 'Горизонтальный переход'; }
 
-      return `
-        <div class="${cls}" data-pos="${pos.id}">
+      return `<div class="${cls}" data-pos="${pos.id}">
           <div class="pos-pct">${Math.round(readiness * 100)}%</div>
           ${label ? `<div class="pos-label">${label}</div>` : ''}
         </div>`;
     }).join('');
     return gradeCell + cells;
   }).join('');
+
+  const treeSVG = buildCareerTreeSVG();
 
   document.getElementById('map').innerHTML = `
     <div class="card">
@@ -368,7 +369,21 @@ function renderMap() {
         </div>
       </div>
     </div>
-  `;
+
+    <div class="card">
+      <div class="panel-head">
+        <h2 style="margin:0">Дерево карьерных переходов</h2>
+        <div class="legend">
+          <span><i class="dot edge-vertical"></i>Вертикальный рост</span>
+          <span><i class="dot edge-horiz"></i>Горизонтальный переход</span>
+          <span><i class="dot edge-future"></i>Перспектива</span>
+        </div>
+      </div>
+      <p class="muted">Ваши возможные пути от текущей позиции. Нажмите на узел, чтобы увидеть требования и разрыв в навыках.</p>
+      <div class="career-tree-wrap">
+        ${treeSVG}
+      </div>
+    </div>`;
 }
 
 /* ---------- Render: Plan ---------- */
