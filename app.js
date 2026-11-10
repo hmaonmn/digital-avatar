@@ -2,50 +2,57 @@
    Digital Avatar — приложение
    ============================================================ */
 
-const STORAGE_KEY = 'digital_avatar_v1';
-const AVATARS = ['🧑‍💻', '👩‍💻', '👨‍💼', '👩‍💼', '🦊', '🐼', '🦉', '🚀', '🐉', '🦄'];
+const STORAGE_KEY = 'digital_avatar_v2';
+const AVATARS = ['🧑‍💻', '👩‍💻', '👨‍💼', '👩‍💼', '🦊', '🐼', '🦉', '🚀', '🐉', '🦄', '🧙‍♂️', '🧑‍🔬'];
 
-const DEFAULT_STATE = {
-  name: 'Алексей Смирнов',
-  avatar: '🧑‍💻',
-  role: 'Backend-разработчик',
-  department: 'Платформа',
-  position: 'backend_middle',
-  xp: 1850,
-  skills: { ...DEFAULT_SKILLS },
-  goals: DEFAULT_GOALS.map(g => ({ ...g })),
-  activity: [
-    { icon: '🏁', text: 'Старт работы с Digital Avatar', time: Date.now() - 2 * 86400000 },
-    { icon: '📈', text: 'Готовность к Senior Backend достигла 81%', time: Date.now() - 86400000 },
-  ],
-};
+/* ---------- Store: users map + active user ---------- */
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
 
-/* ---------- State ---------- */
-const clone = o => JSON.parse(JSON.stringify(o));
+function createDefaultUsers() {
+  const result = {};
+  Object.entries(USER_PROFILES).forEach(([id, p]) => {
+    result[id] = clone(p);
+    result[id].skills = { ...mkSkills({}), ...p.skills };
+  });
+  return result;
+}
 
-let state = loadState();
-let radarMode = 'hard';
-
-function loadState() {
+function loadStore() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return clone(DEFAULT_STATE);
-    const saved = JSON.parse(raw);
-    return {
-      ...clone(DEFAULT_STATE),
-      ...saved,
-      skills: { ...DEFAULT_SKILLS, ...(saved.skills || {}) },
-      goals: saved.goals || clone(DEFAULT_GOALS),
-    };
+    if (!raw) return { users: createDefaultUsers(), activeUserId: 'alexey' };
+    const parsed = JSON.parse(raw);
+    if (!parsed.users || !Object.keys(parsed.users).length)
+      return { users: createDefaultUsers(), activeUserId: 'alexey' };
+    return parsed;
   } catch {
-    return clone(DEFAULT_STATE);
+    return { users: createDefaultUsers(), activeUserId: 'alexey' };
   }
 }
 
-function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+let store = loadStore();
+let users = store.users;
+let activeUserId = users[store.activeUserId] ? store.activeUserId : Object.keys(users)[0];
+let state = users[activeUserId];
+let radarMode = 'hard';
 
-/* ---------- Helpers ---------- */
+function saveState() {
+  users[activeUserId] = state;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ users, activeUserId }));
+}
+
+function switchUser(id) {
+  if (!users[id] || id === activeUserId) return;
+  users[activeUserId] = state;
+  activeUserId = id;
+  state = users[id];
+  saveState();
+  renderAll();
+  toast(`Переключено на ${state.name}`);
+}
+
 const currentPosition = () => POSITION_BY_ID[state.position];
+
 
 function positionReadiness(pos, skills) {
   const entries = Object.entries(pos.requirements);
@@ -123,8 +130,9 @@ function renderProfile() {
       </div>`;
   };
 
-  const hard = Object.entries(SKILL_CATALOG).filter(([, s]) => s.group === 'Hard');
-  const soft = Object.entries(SKILL_CATALOG).filter(([, s]) => s.group === 'Soft');
+  const hard    = Object.entries(SKILL_CATALOG).filter(([, s]) => s.group === 'Hard');
+  const soft    = Object.entries(SKILL_CATALOG).filter(([, s]) => s.group === 'Soft');
+  const project = Object.entries(SKILL_CATALOG).filter(([, s]) => s.group === 'Project');
 
   document.getElementById('profile').innerHTML = `
     <div class="hero card">
@@ -159,19 +167,14 @@ function renderProfile() {
       </div>
     </div>
 
-    <div class="card">
+        <div class="card">
       <h2>Навыки</h2>
       <div class="skills-cols">
-        <div>
-          <h3>Hard skills</h3>
-          ${hard.map(skillRow).join('')}
-        </div>
-        <div>
-          <h3>Soft skills</h3>
-          ${soft.map(skillRow).join('')}
-        </div>
+        <div><h3>Hard skills</h3>${hard.map(skillRow).join('')}</div>
+        <div><h3>Soft skills</h3>${soft.map(skillRow).join('')}</div>
+        <div><h3>Проектные навыки</h3>${project.map(skillRow).join('')}</div>
       </div>
-    </div>
+    </div>`;
   `;
 }
 
@@ -540,9 +543,15 @@ function buildRadarSVG(skillIds, requirements, userSkills, currentGradeLevel) {
 function renderRadar() {
   const pos = currentPosition();
   const track = TRACKS[pos.trackId];
-  const isHard = radarMode === 'hard';
-  const skillIds = isHard ? Object.keys(track.skills) : Object.keys(SOFT_GRADE_REQUIREMENTS);
-  const requirements = isHard ? track.skills : SOFT_GRADE_REQUIREMENTS;
+  const isHard    = radarMode === 'hard';
+  const isSoft    = radarMode === 'soft';
+  const isProject = radarMode === 'project';
+  const skillIds = isHard    ? Object.keys(track.skills)
+                 : isSoft    ? Object.keys(SOFT_GRADE_REQUIREMENTS)
+                 :             Object.keys(PROJECT_GRADE_REQUIREMENTS);
+  const requirements = isHard    ? track.skills
+                     : isSoft    ? SOFT_GRADE_REQUIREMENTS
+                     :             PROJECT_GRADE_REQUIREMENTS;
 
   const svg = buildRadarSVG(skillIds, requirements, state.skills, pos.gradeLevel);
 
@@ -562,12 +571,13 @@ function renderRadar() {
     <div class="card">
       <div class="panel-head">
         <h2 style="margin:0">Роза навыков</h2>
-        <div class="radar-toggle">
-          <button class="toggle-btn ${isHard ? 'active' : ''}" data-radar-mode="hard">Hard skills</button>
-          <button class="toggle-btn ${!isHard ? 'active' : ''}" data-radar-mode="soft">Soft skills</button>
+                <div class="radar-toggle">
+          <button class="toggle-btn ${isHard    ? 'active' : ''}" data-radar-mode="hard">Hard</button>
+          <button class="toggle-btn ${isSoft    ? 'active' : ''}" data-radar-mode="soft">Soft</button>
+          <button class="toggle-btn ${isProject ? 'active' : ''}" data-radar-mode="project">Проектные</button>
         </div>
       </div>
-      <p class="muted">На графике — ваши навыки${isHard ? ` (направление <strong style="color:var(--text)">${track.name}</strong>)` : ''} и границы грейдов Junior, Middle, Senior. Ваша позиция: <strong style="color:var(--text)">${pos.title}</strong>.</p>
+            <p class="muted">На графике — ваши навыки${isHard ? ` (направление <strong style="color:var(--text)">${track.name}</strong>)` : isSoft ? ' (универсальные)' : ' (проектные)'} и границы грейдов Junior, Middle, Senior. Позиция: <strong style="color:var(--text)">${pos.title}</strong>.</p>
       <div class="radar-layout">
         <div class="radar-wrap">${svg}</div>
         <div class="radar-info">
@@ -602,13 +612,63 @@ function onRadarClick(e) {
   }
 }
 
+/* ---------- User Switcher ---------- */
+function renderUserSwitcher() {
+  const pos = currentPosition();
+  const track = TRACKS[pos.trackId];
+  const grade = GRADES.find(g => g.id === pos.gradeId);
+
+  document.getElementById('user-switcher-avatar').textContent = state.avatar;
+  document.getElementById('user-switcher-name').textContent = state.name;
+  document.getElementById('user-switcher-role').textContent = `${grade.name} ${track.name}`;
+
+  document.getElementById('user-dropdown').innerHTML = Object.entries(users).map(([id, u]) => {
+    const uPos = POSITION_BY_ID[u.position];
+    const uTrack = TRACKS[uPos.trackId];
+    const uGrade = GRADES.find(g => g.id === uPos.gradeId);
+    return `
+      <button class="user-option ${id === activeUserId ? 'active' : ''}" data-user-id="${id}">
+        <span class="user-option-avatar">${u.avatar}</span>
+        <span class="user-option-info">
+          <span class="user-option-name">${u.name}</span>
+          <span class="user-option-role">${u.role} · ${u.department}</span>
+        </span>
+        <span class="user-option-grade">${uGrade.name}</span>
+      </button>`;
+  }).join('');
+}
+
+function setupUserSwitcher() {
+  const btn = document.getElementById('user-switcher-btn');
+  const dropdown = document.getElementById('user-dropdown');
+
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    dropdown.classList.toggle('hidden');
+  });
+
+  dropdown.addEventListener('click', e => {
+    const opt = e.target.closest('[data-user-id]');
+    if (opt) {
+      switchUser(opt.dataset.userId);
+      dropdown.classList.add('hidden');
+    }
+  });
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.user-switcher')) dropdown.classList.add('hidden');
+  });
+}
+
 /* ---------- Render all ---------- */
-function renderAll() { 
-   renderProfile(); 
-   renderRadar(); 
-   renderMap(); 
-   renderPlan(); 
-   renderFeed(); }
+function renderAll() {
+  renderUserSwitcher();
+  renderProfile();
+  renderRadar();
+  renderMap();
+  renderPlan();
+  renderFeed();
+}
 
 /* ---------- Modal ---------- */
 function openPositionModal(posId) {
@@ -776,17 +836,20 @@ function init() {
     if (moveBtn) moveToPosition(moveBtn.dataset.move);
   });
 
-  document.getElementById('reset-btn').addEventListener('click', () => {
-    if (!confirm('Сбросить демо-данные?')) return;
+    document.getElementById('reset-btn').addEventListener('click', () => {
+    if (!confirm('Сбросить все демо-данные (все пользователи)?')) return;
     localStorage.removeItem(STORAGE_KEY);
-    state = loadState();
+    store = loadStore();
+    users = store.users;
+    activeUserId = store.activeUserId;
+    state = users[activeUserId];
     renderAll();
-    toast('Демо-данные сброшены');
+    toast('Все демо-данные сброшены');
   });
 
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
+    setupUserSwitcher();
   renderAll();
 }
-
 init();
