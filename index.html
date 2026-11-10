@@ -19,13 +19,25 @@
       <p class="muted small">Платформа развития сотрудников</p>
     </div>
   </div>
+
+  <div class="user-switcher">
+    <button class="user-switcher-btn" id="user-switcher-btn">
+      <span class="user-switcher-avatar" id="user-switcher-avatar">🧑‍💻</span>
+      <span class="user-switcher-info">
+        <span class="user-switcher-name" id="user-switcher-name">Загрузка…</span>
+        <span class="user-switcher-role" id="user-switcher-role"></span>
+      </span>
+      <span class="user-switcher-arrow">▾</span>
+    </button>
+    <div class="user-dropdown hidden" id="user-dropdown"></div>
+  </div>
+
   <nav class="tabs">
     <button class="tab active" data-tab="profile">Профиль</button>
     <button class="tab" data-tab="radar">Роза навыков</button>
     <button class="tab" data-tab="map">Карта роста</button>
     <button class="tab" data-tab="plan">План развития</button>
     <button class="tab" data-tab="feed">Активность</button>
-  </nav>
   </nav>
 </header>
 
