@@ -44,7 +44,14 @@ const SKILL_CATALOG = {
   ownership:        { name: 'Ownership',                    group: 'Soft' },
   mentoring:        { name: 'Менторство',                   group: 'Soft' },
   teamwork:         { name: 'Командная работа',             group: 'Soft' },
-  systems_thinking: { name: 'Системное мышление',           group: 'Soft' },
+  systems_thinking: { name: 'Системное мышление',           group: 'Soft'   /* Project */
+  project_planning: { name: 'Планирование проектов', group: 'Project' },
+  estimation:       { name: 'Оценка задач и сроков', group: 'Project' },
+  risk_management:  { name: 'Управление рисками',    group: 'Project' },
+  requirements:     { name: 'Работа с требованиями', group: 'Project' },
+  delivery:         { name: 'Управление поставкой',  group: 'Project' },
+  quality:          { name: 'Контроль качества',     group: 'Project' },
+  documentation:    { name: 'Документирование',      group: 'Project' },},
 };
 
 /* Уровни навыков по грейдам: [junior, middle, senior, lead, principal] */
@@ -197,6 +204,9 @@ const SKILL_SHORT_NAMES = {
   api_testing: 'API-тесты',    perf_testing: 'Нагрузка',
   communication: 'Коммуникация', ownership: 'Ownership',    mentoring: 'Менторство',
   teamwork: 'Командность',     systems_thinking: 'Сист. мышление',
+   project_planning: 'Планирование', estimation: 'Оценка', risk_management: 'Риски',
+  requirements: 'Требования', delivery: 'Delivery', quality: 'Качество',
+  documentation: 'Документация',
 };
 
 /* Универсальные требования к soft-навыкам по грейдам:
@@ -207,4 +217,117 @@ const SOFT_GRADE_REQUIREMENTS = {
   mentoring:        [15, 30, 50, 75, 90],
   teamwork:         [40, 60, 75, 88, 95],
   systems_thinking: [25, 45, 65, 82, 92],
+};
+
+/* Универсальные требования к проектным навыкам по грейдам */
+const PROJECT_GRADE_REQUIREMENTS = {
+  project_planning: [20, 40, 65, 85, 95],
+  estimation:       [25, 45, 70, 88, 95],
+  risk_management:  [10, 30, 55, 80, 92],
+  requirements:     [20, 40, 65, 85, 95],
+  delivery:         [15, 35, 60, 85, 95],
+  quality:          [25, 45, 70, 88, 95],
+  documentation:    [30, 50, 70, 82, 90],
+};
+
+/* ---------- Пользователи демо ---------- */
+function mkSkills(dominant) {
+  const s = {};
+  Object.keys(SKILL_CATALOG).forEach(id => s[id] = 20);
+  return Object.assign(s, dominant);
+}
+
+const USER_PROFILES = {
+  alexey: {
+    name: 'Алексей Смирнов', role: 'Backend-разработчик', department: 'Платформа',
+    avatar: '🧑‍💻', position: 'backend_middle', xp: 1850,
+    skills: mkSkills({
+      algorithms: 62, api_design: 70, databases: 58, architecture: 42, backend_testing: 65,
+      sql: 45, python: 40, linux: 35, ci_cd: 30, api_testing: 40,
+      communication: 55, ownership: 60, mentoring: 28, teamwork: 66, systems_thinking: 48,
+      project_planning: 45, estimation: 50, risk_management: 30, requirements: 48,
+      delivery: 35, quality: 55, documentation: 60,
+    }),
+    goals: [
+      { id: 'a1', title: 'Пройти курс по системному дизайну', skill: 'architecture',    xp: 200, progress: 40, completed: false },
+      { id: 'a2', title: 'Взять ответственность за delivery одного сервиса', skill: 'delivery', xp: 250, progress: 15, completed: false },
+      { id: 'a3', title: 'Стать наставником для джуна',       skill: 'mentoring',       xp: 300, progress: 20, completed: false },
+    ],
+    activity: [
+      { icon: '🏁', text: 'Старт работы с Digital Avatar', time: Date.now() - 2 * 86400000 },
+      { icon: '📈', text: 'Готовность к Senior Backend достигла 81%', time: Date.now() - 86400000 },
+    ],
+  },
+
+  maria: {
+    name: 'Мария Иванова', role: 'Продакт-менеджер', department: 'Продукт',
+    avatar: '👩‍💼', position: 'product_senior', xp: 4300,
+    skills: mkSkills({
+      discovery: 82, analytics: 78, roadmap: 75, stakeholder: 80, metrics: 72,
+      communication: 85, systems_thinking: 70, teamwork: 80, ownership: 78,
+      project_planning: 82, estimation: 70, risk_management: 65, requirements: 88,
+      delivery: 78, quality: 70, documentation: 75,
+    }),
+    goals: [
+      { id: 'm1', title: 'Запустить A/B-тест ключевой метрики', skill: 'metrics', xp: 250, progress: 60, completed: false },
+      { id: 'm2', title: 'Провести стратегическую сессию со стейкхолдерами', skill: 'stakeholder', xp: 300, progress: 30, completed: false },
+    ],
+    activity: [
+      { icon: '🚀', text: 'Вышла на грейд Senior Product', time: Date.now() - 5 * 86400000 },
+    ],
+  },
+
+  anna: {
+    name: 'Анна Петрова', role: 'Frontend-разработчик', department: 'Веб-платформа',
+    avatar: '👩‍💻', position: 'frontend_lead', xp: 7200,
+    skills: mkSkills({
+      html_css: 90, js_ts: 92, ui_ux: 85, frontend_perf: 82, accessibility: 78,
+      communication: 82, teamwork: 88, mentoring: 78, ownership: 85, systems_thinking: 80,
+      project_planning: 85, estimation: 82, risk_management: 78, requirements: 80,
+      delivery: 88, quality: 85, documentation: 78,
+    }),
+    goals: [
+      { id: 'n1', title: 'Внедрить дизайн-систему на 3 продукта', skill: 'ui_ux', xp: 400, progress: 35, completed: false },
+      { id: 'n2', title: 'Стать наставником для двух middle-разработчиков', skill: 'mentoring', xp: 350, progress: 50, completed: false },
+    ],
+    activity: [
+      { icon: '👑', text: 'Переход на Lead Frontend', time: Date.now() - 10 * 86400000 },
+    ],
+  },
+
+  igor: {
+    name: 'Игорь Волков', role: 'DevOps-инженер', department: 'Инфраструктура',
+    avatar: '🧙‍♂️', position: 'devops_senior', xp: 5000,
+    skills: mkSkills({
+      linux: 88, ci_cd: 85, k8s: 80, cloud: 82, monitoring: 85,
+      communication: 70, ownership: 78, teamwork: 72, systems_thinking: 75,
+      project_planning: 72, estimation: 70, risk_management: 68, requirements: 65,
+      delivery: 80, quality: 82, documentation: 70,
+    }),
+    goals: [
+      { id: 'i1', title: 'Мигрировать 3 сервиса в Kubernetes', skill: 'k8s', xp: 300, progress: 55, completed: false },
+      { id: 'i2', title: 'Настроить SLO-мониторинг по всем продуктам', skill: 'monitoring', xp: 280, progress: 20, completed: false },
+    ],
+    activity: [
+      { icon: '🔧', text: 'Переход на Senior DevOps', time: Date.now() - 7 * 86400000 },
+    ],
+  },
+
+  dmitry: {
+    name: 'Дмитрий Козлов', role: 'QA-инженер', department: 'Качество',
+    avatar: '🧑‍🔬', position: 'qa_junior', xp: 400,
+    skills: mkSkills({
+      test_design: 42, automation: 28, api_testing: 38, perf_testing: 22,
+      communication: 40, teamwork: 55, ownership: 38, systems_thinking: 30,
+      project_planning: 28, estimation: 30, risk_management: 18, requirements: 35,
+      delivery: 22, quality: 50, documentation: 45,
+    }),
+    goals: [
+      { id: 'd1', title: 'Закрыть 5 задач по API-тестированию', skill: 'api_testing', xp: 150, progress: 40, completed: false },
+      { id: 'd2', title: 'Начать изучать автотесты на Playwright', skill: 'automation', xp: 200, progress: 10, completed: false },
+    ],
+    activity: [
+      { icon: '🌱', text: 'Присоединился к Digital Avatar', time: Date.now() - 3 * 86400000 },
+    ],
+  },
 };
