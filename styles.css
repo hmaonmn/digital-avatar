@@ -578,3 +578,56 @@ main { flex: 1; padding: 24px 28px; max-width: 1300px; width: 100%; margin: 0 au
 .dot.edge-vertical { background: #22c55e; }
 .dot.edge-horiz    { background: #3b82f6; }
 .dot.edge-future   { background: rgba(34,197,94,0.4); }
+
+/* ---------- User Switcher ---------- */
+.user-switcher { position: relative; margin: 0 20px; flex-shrink: 0; }
+.user-switcher-btn {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 14px 8px 8px; border-radius: 999px;
+  border: 1px solid var(--border); background: rgba(255,255,255,.03);
+  color: var(--text); font-family: inherit; cursor: pointer; transition: .15s;
+}
+.user-switcher-btn:hover { border-color: var(--accent); background: rgba(99,102,241,.1); }
+.user-switcher-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: grid; place-items: center; font-size: 18px;
+  background: linear-gradient(135deg, rgba(99,102,241,.3), rgba(34,211,238,.2));
+}
+.user-switcher-info { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.1; }
+.user-switcher-name { font-weight: 700; font-size: 12px; }
+.user-switcher-role { font-size: 10px; color: var(--muted); }
+.user-switcher-arrow { font-size: 10px; color: var(--muted); margin-left: 4px; }
+.user-dropdown {
+  position: absolute; top: calc(100% + 8px); left: 0; min-width: 300px;
+  background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+  padding: 8px; box-shadow: 0 20px 40px -10px rgba(0,0,0,.6); z-index: 100;
+}
+.user-dropdown.hidden { display: none; }
+.user-option {
+  display: flex; align-items: center; gap: 12px; padding: 10px;
+  border-radius: 10px; cursor: pointer; transition: .15s;
+  border: 1px solid transparent; background: transparent; color: var(--text);
+  font-family: inherit; width: 100%; text-align: left;
+}
+.user-option:hover { background: rgba(99,102,241,.1); }
+.user-option.active { background: rgba(99,102,241,.15); border-color: rgba(99,102,241,.4); }
+.user-option-avatar {
+  width: 40px; height: 40px; border-radius: 10px;
+  display: grid; place-items: center; font-size: 22px;
+  background: linear-gradient(135deg, rgba(99,102,241,.25), rgba(34,211,238,.15));
+}
+.user-option-info { flex: 1; }
+.user-option-name { font-weight: 700; font-size: 13px; display: block; }
+.user-option-role { font-size: 11px; color: var(--muted); display: block; }
+.user-option-grade {
+  font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 999px;
+  background: rgba(99,102,241,.15); color: #c7d2fe; flex-shrink: 0;
+}
+
+/* ---------- Skills: три колонки ---------- */
+.skills-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+@media (max-width: 1100px) { .skills-cols { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 700px)  { .skills-cols { grid-template-columns: 1fr; } }
+
+/* Radar toggle для трёх режимов */
+.radar-toggle .toggle-btn { min-width: 90px; }
